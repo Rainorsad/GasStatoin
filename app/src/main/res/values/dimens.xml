@@ -1,0 +1,93 @@
+<resources>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="expression_list_item_iv_wh">30dp</dimen>
+
+    <dimen name="action_text_size">16sp</dimen>
+    <dimen name="common_textsize_8">8sp</dimen>
+    <dimen name="common_textsize_9">9sp</dimen>
+    <dimen name="common_textsize_10">10sp</dimen>
+    <dimen name="common_textsize_11">11sp</dimen>
+    <dimen name="common_textsize_12">12sp</dimen>
+    <dimen name="common_textsize_13">13sp</dimen>
+    <dimen name="common_textsize_14">14sp</dimen>
+    <dimen name="common_textsize_15">15sp</dimen>
+    <dimen name="common_textsize_16">16sp</dimen>
+    <dimen name="common_textsize_17">17sp</dimen>
+    <dimen name="common_textsize_18">18sp</dimen>
+    <dimen name="common_textsize_19">19sp</dimen>
+    <dimen name="common_textsize_20">20sp</dimen>
+    <dimen name="common_textsize_22">22sp</dimen>
+    <dimen name="Firend_Item_textsize">15sp</dimen>
+    <dimen name="dp_32">32dp</dimen>
+    <dimen name="gp_height">20dp</dimen>
+    <!-- Firendlist -->
+    <dimen name="title_size">16sp</dimen>
+    <dimen name="news_title_size">18sp</dimen>
+
+    <dimen name="plus_size">96dp</dimen>
+
+    <!-- chatmessage -->
+    <dimen name="message_add_text">11sp</dimen>
+    <dimen name="camera_focus_area_size">96dp</dimen>
+    <dimen name="recoder_circle_bg_width">141dp</dimen>
+    <dimen name="recoder_circle_bg_height">141dp</dimen>
+
+    <!-- chatmessage.xml -->
+    <dimen name="chat_img_btn_wh">40dp</dimen>
+    <dimen name="chat_img_btn_maring_tb">5dp</dimen>
+    <dimen name="chat_edittext_margin_top">7dp</dimen>
+    <dimen name="chat_send_btn_width">60dp</dimen>
+    <dimen name="chat_send_btn_textxize">15dp</dimen>
+    <dimen name="chat_ll_expression_height">120dp</dimen>
+    <dimen name="chat_vp_id_height">130dp</dimen>
+    <dimen name="chat_camera_id_height">100dp</dimen>
+    <dimen name="chat_dot_wh">6dp</dimen>
+    <dimen name="chat_dot_margin_lr">5dp</dimen>
+    <dimen name="chat_expression_wh">15dp</dimen>
+    <dimen name="chat_edittext_size">17dp</dimen>
+    <dimen name="chat_gv_padding_lr">5dp</dimen>
+    <dimen name="chat_gv_padding_bt">0dp</dimen>
+    <dimen name="chat_gv_spacing">10dp</dimen>
+    <dimen name="chat_expression_columns">7dp</dimen>
+    <dimen name="chat_expression_rows">3dp</dimen>
+
+    <!-- CoachActivityList -->
+    <dimen name="coach_list_num_text">10sp</dimen>
+    <dimen name="coach_list_username_text">15sp</dimen>
+    <dimen name="coach_list_teachname_text">11sp</dimen>
+
+
+    <!-- FragmenMe-->
+    <dimen name="fragmentme_nologin_rela_height">146dp</dimen>
+    <dimen name="fragmentme_nologin_rela_but_height">43dp</dimen>
+    <dimen name="fragmentme_nologin_rela_but_widght">202dp</dimen>
+
+
+    <!-- LoginActivity-->
+    <dimen name="logina_relahead_height_img_height">96dp</dimen>
+    <dimen name="logina_relahead_height_img_width">96dp</dimen>
+    <dimen name="logina_relahead_text_marginbot">52px</dimen>
+    <dimen name="logina_relahead_text_margintop">26px</dimen>
+
+    <!--SettingActivity-->
+    <dimen name="setting_rela_pad">14dp</dimen>
+
+    <!-- 选项文字大小 需要配合 bools.xml 的 pickerview_customTextSize 为 true 才有效果-->
+    <dimen name="pickerview_textsize">20sp</dimen>
+
+    <dimen name="teamiconwh">43dp</dimen>
+    <dimen name="teamiconip">0.5dp</dimen>
+
+    <!--成语大作战-->
+    <dimen name="gv_padding_lr">1dp</dimen>
+    <dimen name="gv_spacing">1dp</dimen>
+    <dimen name="gv_margin_top">8dp</dimen>
+    <dimen name="gv_tool_v">12dp</dimen>
+    <dimen name="gv_tool_h">3dp</dimen>
+    <dimen name="gv_member_h">10dp</dimen>
+    <dimen name="gv_idiom_v">2dp</dimen>
+    <dimen name="gv_room_h">18dp</dimen>
+    <dimen name="gv_status_h">22.5dp</dimen>
+    <dimen name="gv_id_h">8dp</dimen>
+    <dimen name="dialog_y">167dp</dimen>
+</resources>

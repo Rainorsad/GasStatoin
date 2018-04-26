@@ -14,21 +14,21 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfigs {
-                debug {
-                    storeFile file("E:\\workpah\\GasStation\\keys.jks")
-                    storePassword "gasstation"
-                    keyAlias "key0"
-                    keyPassword "gasstation"
-                }
-
-                release {
-                    storeFile file("E:\\workpah\\GasStation\\keys.jks")
-                    storePassword "gasstation"
-                    keyAlias "key0"
-                    keyPassword "gasstation"
-                }
-            }
+//            signingConfigs {
+//                debug {
+//                    storeFile file("E:\\workpah\\GasStation\\keys.jks")
+//                    storePassword "gasstation"
+//                    keyAlias "key0"
+//                    keyPassword "gasstation"
+//                }
+//
+//                release {
+//                    storeFile file("E:\\workpah\\GasStation\\keys.jks")
+//                    storePassword "gasstation"
+//                    keyAlias "key0"
+//                    keyPassword "gasstation"
+//                }
+//            }
         }
     }
     sourceSets { main {

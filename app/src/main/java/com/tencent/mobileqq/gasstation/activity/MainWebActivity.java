@@ -32,7 +32,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
-
+import butterknife.BindView;
+import butterknife.OnClick;
+import com.alibaba.fastjson.JSON;
+import com.alipay.sdk.app.H5PayCallback;
+import com.alipay.sdk.app.PayTask;
+import com.alipay.sdk.util.H5PayResultModel;
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
@@ -42,22 +47,20 @@ import com.google.gson.Gson;
 import com.tencent.mobileqq.gasstation.R;
 import com.tencent.mobileqq.gasstation.activity.imageutils.CropImageActivity;
 import com.tencent.mobileqq.gasstation.bean.Location;
+import com.tencent.mobileqq.gasstation.bean.PhotoCall;
 import com.tencent.mobileqq.gasstation.bean.UserInfoBean;
 import com.tencent.mobileqq.gasstation.configer.Configer;
 import com.tencent.mobileqq.gasstation.db.UserInfoDb;
+import com.tencent.mobileqq.gasstation.http.KJHttpUtil;
 import com.tencent.mobileqq.gasstation.inteface.JSOnclickInterface;
 import com.tencent.mobileqq.gasstation.utila.AtKeyBoardUp;
 import com.tencent.mobileqq.gasstation.utila.JSInterface;
-
-import org.kymjs.kjframe.ui.ViewInject;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import butterknife.BindView;
-import butterknife.OnClick;
+import org.kymjs.kjframe.http.HttpCallBack;
+import org.kymjs.kjframe.ui.ViewInject;
 
 /**
  * Created by Zhangchen on 2018/3/5.
@@ -68,13 +71,21 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
     private static final String TAG = "WebViewH5Activity";
 
     private static final int FLAG_CHOOSE_IMG = 5;// 从相册中选择
+
     private static final int FLAG_CHOOSE_PHONE = 6;// 拍照
+
     private static final int FLAG_MODIFY_FINISH = 7;// 结果
+
     public static final File FILE_LOCAL = new File(Configer.FILE_PIC_PATH);
+
     private static String localTempImageFileName;
+
     private String path;
+
     private Dialog dialog;
+
     private LocationClient mLocationClient;
+
     private BDLocationListener mBDLocaListener;
 
     private UserInfoDb db;
@@ -92,42 +103,35 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
     @Override
     protected void setView() {
         webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
         AtKeyBoardUp.assistActivity(this); //防止软件盘遮挡网页输入框内容
     }
 
     @SuppressLint("AddJavascriptInterface")
     @Override
     protected void setDeal() {
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
         webView.setWebViewClient(webViewClient);
-//        webView.loadUrl("file:///android_asset/test.html");
-        webView.loadUrl(Configer.LOGINHTTP);
-
         webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NARROW_COLUMNS);
         webSettings.setUseWideViewPort(true);
         webSettings.setLoadWithOverviewMode(true);
+        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         webSettings.setJavaScriptEnabled(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setBlockNetworkImage(false);//同步请求图片
+        webSettings.setDatabaseEnabled(true);
+        webSettings.setDomStorageEnabled(true);//允许DCOM
 
-        saveCacheData(webSettings);
-
+//        webView.loadUrl("file:///android_asset/test.html");
+        webView.loadUrl(Configer.LOGINHTTP);
 
         /**
          * 打开js交互接口
          */
         webView.addJavascriptInterface(new JSInterface(webView), "gasstation");
-
         webView.setWebChromeClient(new WebChromeClient());
 
-
-        webView.loadUrl("javascript:show()");
-    }
-
-    private void saveCacheData(WebSettings webSettings) {
-        webSettings.setDatabaseEnabled(true);
-        webSettings.setDomStorageEnabled(true);//允许DCOM
     }
 
 
@@ -141,10 +145,37 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
     WebViewClient webViewClient = new WebViewClient() {
         @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
         @Override
-        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-            String url = request.getUrl().toString();
-            view.loadUrl(url);
-            return false;
+        public boolean shouldOverrideUrlLoading(final WebView view, WebResourceRequest request) {
+            String url = request.getUrl()
+                                .toString();
+            if (!(url.startsWith("http") || url.startsWith("https"))) {
+                return true;
+            }
+            final PayTask task = new PayTask(MainWebActivity.this);
+            boolean isIntercepted = task.payInterceptorWithUrl(url, true, new H5PayCallback() {
+                @Override
+                public void onPayResult(final H5PayResultModel result) {
+                    // 支付结果返回
+                    final String url = result.getReturnUrl();
+                    if (!TextUtils.isEmpty(url)) {
+                        MainWebActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                view.loadUrl(url);
+                            }
+                        });
+                    }
+                }
+            });
+
+            /**
+             * 判断是否成功拦截
+             * 若成功拦截，则无需继续加载该URL；否则继续加载
+             */
+            if (!isIntercepted) {
+                view.loadUrl(url);
+            }
+            return true;
         }
     };
 
@@ -160,15 +191,17 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      * js中地理位置获取
      */
     @Override
-    public void onClickLocation(double x,double y) {
+    public void onClickLocation(double x, double y) {
         if (isAvilible(this, "com.baidu.BaiduMap")) {
             ToaS(this, "即将用百度地图打开导航");
-            Uri mUri = Uri.parse("geo:" + 116.243614 + "," + 39.900469 + "?q=" + "中国北京市石景山区雕塑园南街");
+            Uri    mUri    = Uri.parse(
+                "geo:" + 116.243614 + "," + 39.900469 + "?q=" + "中国北京市石景山区雕塑园南街");
             Intent mIntent = new Intent(Intent.ACTION_VIEW, mUri);
             startActivity(mIntent);
         } else if (isAvilible(this, "com.autonavi.minimap")) {
             ToaS(this, "即将用高德地图打开导航");
-            Uri mUri = Uri.parse("geo:" + 116.243614 + "," + 39.900469 + "?q=" + "中国北京市石景山区雕塑园南街");
+            Uri    mUri   = Uri.parse(
+                "geo:" + 116.243614 + "," + 39.900469 + "?q=" + "中国北京市石景山区雕塑园南街");
             Intent intent = new Intent("android.intent.action.VIEW", mUri);
             startActivity(intent);
         } else {
@@ -177,14 +210,14 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         }
     }
 
+    private Boolean locationIndex = false;
+
+    Location locatdata;
+
     //获取经纬度
     @Override
     public String onClickGetLocation() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-        }
-        mLocationClient = new LocationClient(this);
+        mLocationClient = new LocationClient(MainWebActivity.this);
         mBDLocaListener = new MyBDLocationListener();
         mLocationClient.registerLocationListener(mBDLocaListener);
 
@@ -196,7 +229,36 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         option.setNeedDeviceDirect(true);
         mLocationClient.setLocOption(option);
         mLocationClient.start();
-        return  null;
+        Log.d(TAG, "测试");
+
+        int i = 0;
+        for (; ; ) {
+            if (i<30) {
+                i++;
+                if (locationIndex) {
+                    locationIndex = false;
+                    break;
+                }
+            }else {
+                break;
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        Gson   gson = new Gson();
+        String data = null;
+        if (locatdata != null) {
+            data = gson.toJson(locatdata);
+            Log.d(TAG, data);
+        }else {
+            locatdata = new Location(null,null);
+            data = gson.toJson(locatdata);
+            Log.d(TAG, data);
+        }
+        return data;
     }
 
     /**
@@ -230,7 +292,7 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
     @Override
     public void onClickDeleteCookei() {
         db = new UserInfoDb(MainWebActivity.this);
-        db.deleteUserInfo(UserInfoBean.class,"id=0");
+        db.deleteUserInfo(UserInfoBean.class, "id=0");
     }
 
     /**
@@ -238,15 +300,19 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     private void getPhoto() {
+        path = null;
         dialog = new Dialog(MainWebActivity.this, R.style.MyDialog);
-        View v = LayoutInflater.from(MainWebActivity.this).inflate(R.layout.item_photodialog, null);
-        final LinearLayout lin_main = (LinearLayout) v.findViewById(R.id.lin_main);
-        Button bt_photo = (Button) v.findViewById(R.id.bt_photo);
-        Button bt_img = (Button) v.findViewById(R.id.bt_imgs);
-        Button bt_finish = (Button) v.findViewById(R.id.bt_finish);
+        View v = LayoutInflater.from(MainWebActivity.this)
+                               .inflate(R.layout.item_photodialog, null);
+        final LinearLayout lin_main  = (LinearLayout) v.findViewById(R.id.lin_main);
+        Button             bt_photo  = (Button) v.findViewById(R.id.bt_photo);
+        Button             bt_img    = (Button) v.findViewById(R.id.bt_imgs);
+        Button             bt_finish = (Button) v.findViewById(R.id.bt_finish);
 
         final View view = lin_main;
-        view.animate().translationY(0).setDuration(500);
+        view.animate()
+            .translationY(0)
+            .setDuration(500);
 
         bt_photo.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -266,7 +332,8 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         bt_finish.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ObjectAnimator animator = ObjectAnimator.ofFloat(view, "translationY", lin_main.getHeight() + 500);
+                ObjectAnimator animator = ObjectAnimator.ofFloat(view, "translationY",
+                                                                 lin_main.getHeight() + 500);
                 animator.setDuration(500);
                 animator.addListener(new Animator.AnimatorListener() {
                     @Override
@@ -294,42 +361,41 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
             }
         });
 
-        Window window = dialog.getWindow();
+        Window                     window       = dialog.getWindow();
         WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
         layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
         layoutParams.height = WindowManager.LayoutParams.MATCH_PARENT;
         window.setAttributes(layoutParams);
         dialog.setContentView(v, layoutParams);
         dialog.show();
+
     }
 
     /**
      * 调用相机
      */
     private void openGamera() {
-        if (ContextCompat.checkSelfPermission(MainWebActivity.this, Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(MainWebActivity.this,
+                                              Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
 
         } else {
             ActivityCompat.requestPermissions(MainWebActivity.this,
-                    new String[]{Manifest.permission.CAMERA}, 1);//1 can be another integer
+                                              new String[]{Manifest.permission.CAMERA},
+                                              1);//1 can be another integer
         }
-
 
         String status = Environment.getExternalStorageState();
         if (status.equals(Environment.MEDIA_MOUNTED)) {
             try {
-                localTempImageFileName = String.valueOf((new Date()).getTime())
-                        + ".png";
+                localTempImageFileName = String.valueOf((new Date()).getTime()) + ".png";
                 File filePath = FILE_LOCAL;
                 if (!filePath.exists()) {
                     filePath.mkdirs();
                 }
-                Intent intent = new Intent(
-                        MediaStore.ACTION_IMAGE_CAPTURE);
-                File f = new File(filePath, localTempImageFileName);
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                File   f      = new File(filePath, localTempImageFileName);
                 if (FileUtils.createOrExistsFile(f)) {
-//                     localTempImgDir和localTempImageFileName是自己定义的名字
+                    //                     localTempImgDir和localTempImageFileName是自己定义的名字
                     Uri u = Uri.fromFile(f);
                     intent.putExtra(MediaStore.Images.Media.ORIENTATION, 0);
                     intent.putExtra(MediaStore.EXTRA_OUTPUT, u);
@@ -356,25 +422,20 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
 
     /**
      * 回调事件处理
-     *
-     * @param requestCode
-     * @param resultCode
-     * @param data
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == FLAG_CHOOSE_IMG && resultCode == RESULT_OK) {
             if (data != null) {
                 Uri uri = data.getData();
                 if (!TextUtils.isEmpty(uri.getAuthority())) {
-                    Cursor cursor = getContentResolver().query(uri,
-                            new String[]{MediaStore.Images.Media.DATA},
-                            null, null, null);
+                    Cursor cursor = getContentResolver().query(uri, new String[]{
+                        MediaStore.Images.Media.DATA}, null, null, null);
                     if (null == cursor) {
                         return;
                     }
                     cursor.moveToFirst();
-                    String path = cursor.getString(cursor
-                            .getColumnIndex(MediaStore.Images.Media.DATA));
+                    String path = cursor.getString(
+                        cursor.getColumnIndex(MediaStore.Images.Media.DATA));
                     cursor.close();
                     Intent intent = new Intent(MainWebActivity.this, CropImageActivity.class);
                     intent.putExtra("path", path);
@@ -386,7 +447,7 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
                 }
             }
         } else if (requestCode == FLAG_CHOOSE_PHONE && resultCode == RESULT_OK) {
-            File f = new File(FILE_LOCAL, localTempImageFileName);
+            File    f           = new File(FILE_LOCAL, localTempImageFileName);
             boolean orExistsDir = FileUtils.createOrExistsFile(f);
             if (orExistsDir) {
                 Intent it = new Intent(MainWebActivity.this, CropImageActivity.class);
@@ -400,23 +461,44 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         } else if (requestCode == FLAG_MODIFY_FINISH && resultCode == RESULT_OK) {
             if (data != null) {
                 path = data.getStringExtra("path");
-                File file = new File(path);
+                //                Log.e(TAG,path);
+                File    file        = new File(path);
                 boolean orExistsDir = FileUtils.createOrExistsFile(file);
                 if (!orExistsDir) {
                     ViewInject.toast("没有获取到照片，请重新选取");
                     return;
                 }
-                webView.loadUrl("javascript:alertMessage(\" " + path + "\")");
+                KJHttpUtil.postFile(MainWebActivity.this, file, photoCallback);
             }
         }
     }
 
+    HttpCallBack photoCallback = new HttpCallBack() {
+        @Override
+        public void onSuccess(String t) {
+            super.onSuccess(t);
+            PhotoCall photoCall = JSON.parseObject(t, PhotoCall.class);
+            Log.e(TAG, photoCall.toString());
+            if (photoCall.getRetCode()
+                         .equals("0")) {
+                Log.e(TAG, "yu");
+                String data = Configer.HTTP_MAIN + photoCall.getData();
+                webView.loadUrl("javascript:alertMessage(\" " + data + "\")");
+            } else {
+                Log.e(TAG, "xing");
+                webView.loadUrl("javascript:alertMessage(\" " + path + "\")");
+            }
+        }
+
+        @Override
+        public void onFailure(int errorNo, String strMsg) {
+            super.onFailure(errorNo, strMsg);
+            Log.e(TAG, strMsg);
+        }
+    };
+
     /**
      * 检查手机上是否安装了指定的软件
-     *
-     * @param context
-     * @param packageName：应用包名
-     * @return
      */
     private boolean isAvilible(Context context, String packageName) {
         //获取packagemanager
@@ -446,22 +528,18 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         return super.onKeyDown(keyCode, event);
     }
 
-    private class MyBDLocationListener implements BDLocationListener{
+    private class MyBDLocationListener implements BDLocationListener {
 
         @Override
         public void onReceiveLocation(BDLocation location) {
-            if (location != null){
-                double latitude = location.getLatitude();
+            if (location != null) {
+                double latitude  = location.getLatitude();
                 double longitude = location.getLongitude();
-                String address = location.getAddrStr();
-                Log.e(TAG, "address:" + address + " latitude:" + latitude
-                        + " longitude:" + longitude + "---");
-                String jingdu = String.valueOf(location.getLongitude());
-                String weidu = String.valueOf(location.getLatitude());
-                Location locatdata = new Location(jingdu,weidu);
-                Gson gson = new Gson();
-                String data = gson.toJson(locatdata);
-                Log.d(TAG,data);
+                String address   = location.getAddrStr();
+                String jingdu    = String.valueOf(location.getLongitude());
+                String weidu     = String.valueOf(location.getLatitude());
+                locatdata = new Location(jingdu, weidu);
+                locationIndex = true;
                 if (mLocationClient.isStarted()) {
                     // 获得位置之后停止定位
                     mLocationClient.stop();
@@ -469,4 +547,6 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
             }
         }
     }
+
+
 }

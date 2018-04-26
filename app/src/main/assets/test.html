@@ -35,8 +35,11 @@
 
             function s() {
                 //调用原生的方法，gasstation为约定的别名；back()为原生的方法
-                window.gasstation.mapLocation();
+                var lngLat = window.gasstation.getLocation();
+                document.getElementById("p").innerHTML=lngLat;
                 //将返回结果显示在id为p的控件上
+
+               // window.gasstation.getPhoto();
             }
 
             function a() {

@@ -1,27 +1,29 @@
 package com.tencent.mobileqq.gasstation.bean;
 
 public class Location {
-    String jingdu;
-    String weidu;
+    String lng;
+    String lat;
 
-    public Location(String jingdu, String weidu) {
-        this.jingdu = jingdu;
-        this.weidu = weidu;
+
+    public Location(String lng, String lat) {
+        this.lng = lng;
+        this.lat = lat;
     }
 
-    public String getJingdu() {
-        return jingdu;
+    public String getLng() {
+        return lng;
     }
 
-    public void setJingdu(String jingdu) {
-        this.jingdu = jingdu;
+    public void setLng(String lng) {
+        this.lng = lng;
     }
 
-    public String getWeidu() {
-        return weidu;
+    public String getLat() {
+        return lat;
     }
 
-    public void setWeidu(String weidu) {
-        this.weidu = weidu;
+    public void setLat(String lat) {
+        this.lat = lat;
     }
+
 }

@@ -24,10 +24,10 @@ public class Configer {
     /**
      微信支付id
      */
-    public static final String APP_ID = "";
+    public static final String APP_ID = "http://118.190.152.119/app";
     public static final String WX_APP_KEY = "584043c98cf26598b76307f57441d41e"; //微信秘钥
 
-    public static final String HTTP_MAIN = "";
+    public static final String HTTP_MAIN = "http://118.190.152.119/app";
     public static final String HTTP_LOGIN = "/driver/login/";
     public static final String HTTP_GETCODE = "/common/sms/sendValidateCode/";
     public static final String HTTP_PHONEALI = "/driver/checkMobile/";

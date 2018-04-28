@@ -19,4 +19,6 @@ public interface JSOnclickInterface {
 
     void onClickDeleteCookei(); //删除缓存
 
+    void onCLickZXing(); //二维码扫码
+
 }

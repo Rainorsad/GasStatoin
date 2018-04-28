@@ -32,6 +32,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import butterknife.BindView;
 import butterknife.OnClick;
 import com.alibaba.fastjson.JSON;
@@ -44,6 +45,8 @@ import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.blankj.utilcode.util.FileUtils;
 import com.google.gson.Gson;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.tencent.mobileqq.gasstation.R;
 import com.tencent.mobileqq.gasstation.activity.imageutils.CropImageActivity;
 import com.tencent.mobileqq.gasstation.bean.Location;
@@ -143,6 +146,16 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
     }
 
     WebViewClient webViewClient = new WebViewClient() {
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            db = new UserInfoDb(MainWebActivity.this);
+            List<UserInfoBean> data = db.getData(UserInfoBean.class);
+            if (data != null && data.size() > 0) {
+                webView.loadUrl("javascript:setImage(\" " + data.get(0).getUserid()  + "\"," + data.get(0).getPassword()+")");
+            }
+        }
+
         @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
         @Override
         public boolean shouldOverrideUrlLoading(final WebView view, WebResourceRequest request) {
@@ -296,6 +309,14 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
     }
 
     /**
+     * 二维码扫码
+     */
+    @Override
+    public void onCLickZXing() {
+        new IntentIntegrator(MainWebActivity.this).initiateScan();
+    }
+
+    /**
      * 打开拍照功能
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
@@ -424,6 +445,17 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      * 回调事件处理
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if(result != null) {
+            if(result.getContents() == null) {
+                Toast.makeText(MainWebActivity.this, "二维码有误，请重新选择", Toast.LENGTH_LONG).show();
+            } else {
+                if (result.getContents().contains("http") || result.getContents().contains("https")){
+                    webView.loadUrl(result.getContents());
+                }
+//                Toast.makeText(MainWebActivity.this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+            }
+        }
         if (requestCode == FLAG_CHOOSE_IMG && resultCode == RESULT_OK) {
             if (data != null) {
                 Uri uri = data.getData();
@@ -481,12 +513,15 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
             Log.e(TAG, photoCall.toString());
             if (photoCall.getRetCode()
                          .equals("0")) {
-                Log.e(TAG, "yu");
-                String data = Configer.HTTP_MAIN + photoCall.getData();
-                webView.loadUrl("javascript:alertMessage(\" " + data + "\")");
+                String replace = photoCall.getData()
+                                          .replace("\\", "/");
+                String data = Configer.HTTP_MAIN + replace;
+
+                Log.e(TAG, data);
+                webView.loadUrl("javascript:setImage(\" " + replace  + "\")");
             } else {
                 Log.e(TAG, "xing");
-                webView.loadUrl("javascript:alertMessage(\" " + path + "\")");
+                webView.loadUrl("javascript:setImage(\"" + path + "\")");
             }
         }
 

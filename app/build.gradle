@@ -14,21 +14,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-//            signingConfigs {
-//                debug {
-//                    storeFile file("E:\\workpah\\GasStation\\keys.jks")
-//                    storePassword "gasstation"
-//                    keyAlias "key0"
-//                    keyPassword "gasstation"
-//                }
-//
-//                release {
-//                    storeFile file("E:\\workpah\\GasStation\\keys.jks")
-//                    storePassword "gasstation"
-//                    keyAlias "key0"
-//                    keyPassword "gasstation"
-//                }
-//            }
+
         }
     }
     sourceSets { main {
@@ -55,4 +41,5 @@ dependencies {
     implementation files('libs/BaiduLBS_Android.jar')
     implementation files('libs/fastjson-1.1.34.android.jar')
     implementation 'com.google.code.gson:gson:2.2.4'
+    compile 'com.journeyapps:zxing-android-embedded:3.6.0'
 }

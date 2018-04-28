@@ -26,6 +26,13 @@ public class JSInterface {
         }
     }
 
+    @JavascriptInterface
+    public void zxingClick(){
+        if (jsOnclickInterface != null){
+            jsOnclickInterface.onCLickZXing();
+        }
+    }
+
     //存储cookie信息
     @JavascriptInterface
     //andorid4.2（包括android4.2）以上，如果不写该注解，js无法调用android方法

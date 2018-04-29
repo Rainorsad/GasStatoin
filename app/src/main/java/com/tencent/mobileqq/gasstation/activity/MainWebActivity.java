@@ -33,8 +33,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-import butterknife.BindView;
-import butterknife.OnClick;
+
 import com.alibaba.fastjson.JSON;
 import com.alipay.sdk.app.H5PayCallback;
 import com.alipay.sdk.app.PayTask;
@@ -58,12 +57,17 @@ import com.tencent.mobileqq.gasstation.http.KJHttpUtil;
 import com.tencent.mobileqq.gasstation.inteface.JSOnclickInterface;
 import com.tencent.mobileqq.gasstation.utila.AtKeyBoardUp;
 import com.tencent.mobileqq.gasstation.utila.JSInterface;
+
+import org.kymjs.kjframe.http.HttpCallBack;
+import org.kymjs.kjframe.ui.ViewInject;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import org.kymjs.kjframe.http.HttpCallBack;
-import org.kymjs.kjframe.ui.ViewInject;
+
+import butterknife.BindView;
+import butterknife.OnClick;
 
 /**
  * Created by Zhangchen on 2018/3/5.
@@ -511,6 +515,9 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
             super.onSuccess(t);
             PhotoCall photoCall = JSON.parseObject(t, PhotoCall.class);
             Log.e(TAG, photoCall.toString());
+            if (dialog != null){
+                dialog.dismiss();
+            }
             if (photoCall.getRetCode()
                          .equals("0")) {
                 String replace = photoCall.getData()
@@ -518,7 +525,7 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
                 String data = Configer.HTTP_MAIN + replace;
 
                 Log.e(TAG, data);
-                webView.loadUrl("javascript:setImage(\" " + replace  + "\")");
+                webView.loadUrl("javascript:setImage(\" " + data  + "\")");
             } else {
                 Log.e(TAG, "xing");
                 webView.loadUrl("javascript:setImage(\"" + path + "\")");

@@ -17,7 +17,7 @@ public class Configer {
     public static final String FILE_PIC_PATH = FILE_MAIN_PATH + "/image/";
 
     //登录h5链接
-    public static final String LOGINHTTP = "http://118.190.152.119/app/html/driver/login.html";
+    public static final String LOGINHTTP = "https://m.zhongxinnengyuan.cn/app/html/driver/login.html";
     //司机端主界面链接
     public static final String DIVERMAINHTTP = "http://118.190.152.119/app/html/driver/index.html";
 
@@ -27,7 +27,7 @@ public class Configer {
     public static final String APP_ID = "http://118.190.152.119/app";
     public static final String WX_APP_KEY = "584043c98cf26598b76307f57441d41e"; //微信秘钥
 
-    public static final String HTTP_MAIN = "http://118.190.152.119/app";
+    public static final String HTTP_MAIN = "https://m.zhongxinnengyuan.cn/app";
     public static final String HTTP_LOGIN = "/driver/login/";
     public static final String HTTP_GETCODE = "/common/sms/sendValidateCode/";
     public static final String HTTP_PHONEALI = "/driver/checkMobile/";

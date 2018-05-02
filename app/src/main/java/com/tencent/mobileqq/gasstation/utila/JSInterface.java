@@ -53,9 +53,9 @@ public class JSInterface {
 
     //调用相册
     @JavascriptInterface
-    public void getPhoto(){
+    public void getPhoto(String type){
         if (jsOnclickInterface != null){
-            jsOnclickInterface.onClickCamers();
+            jsOnclickInterface.onClickCamers(type);
         }
     }
 

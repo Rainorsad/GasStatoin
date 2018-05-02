@@ -13,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.RequiresApi;
@@ -96,6 +97,7 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
     private BDLocationListener mBDLocaListener;
 
     private UserInfoDb db;
+    private String  index = null;
 
     @BindView(R.id.main_webview)
     WebView webView;
@@ -156,7 +158,7 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
             db = new UserInfoDb(MainWebActivity.this);
             List<UserInfoBean> data = db.getData(UserInfoBean.class);
             if (data != null && data.size() > 0) {
-                webView.loadUrl("javascript:setImage(\" " + data.get(0).getUserid()  + "\"," + data.get(0).getPassword()+")");
+                webView.loadUrl("javascript:automaticLogin(\" " + data.get(0).getUserid()  + "\"," + data.get(0).getPassword()+")");
             }
         }
 
@@ -200,7 +202,12 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      * js中调用本地相册
      */
     @Override
-    public void onClickCamers() {
+    public void onClickCamers(String type) {
+        if (type != null){
+            index = type;
+        }else {
+            index = null;
+        }
         getPhoto();
     }
 
@@ -455,7 +462,11 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
                 Toast.makeText(MainWebActivity.this, "二维码有误，请重新选择", Toast.LENGTH_LONG).show();
             } else {
                 if (result.getContents().contains("http") || result.getContents().contains("https")){
-                    webView.loadUrl(result.getContents());
+//                    webView.loadUrl(result.getContents());
+                    Intent it = new Intent(MainWebActivity.this,NewWebActivity.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putString("url",result.getContents());
+                    startActivity(it);
                 }
 //                Toast.makeText(MainWebActivity.this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
             }
@@ -525,10 +536,10 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
                 String data = Configer.HTTP_MAIN + replace;
 
                 Log.e(TAG, data);
-                webView.loadUrl("javascript:setImage(\" " + data  + "\")");
+                webView.loadUrl("javascript:setImage(\" " + data  + "\",\" " + index + "\")");
             } else {
                 Log.e(TAG, "xing");
-                webView.loadUrl("javascript:setImage(\"" + path + "\")");
+                webView.loadUrl("javascript:setImage(\" " + path  + "\",\" " + index + "\")");
             }
         }
 

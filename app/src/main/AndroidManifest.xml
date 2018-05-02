@@ -106,6 +106,7 @@
             />
 
         <activity android:name=".activity.AliPayAcitvity" />
+        <activity android:name=".activity.NewWebActivity" />
 
         <!-- 微信支付 -->
         <activity

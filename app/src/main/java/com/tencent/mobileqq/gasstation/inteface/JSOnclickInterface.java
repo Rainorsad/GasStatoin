@@ -7,7 +7,7 @@ package com.tencent.mobileqq.gasstation.inteface;
 
 public interface JSOnclickInterface {
 
-    void onClickCamers(); //打开相册
+    void onClickCamers(String type); //打开相册
 
     void onClickLocation(double x,double y); //调取地图
 

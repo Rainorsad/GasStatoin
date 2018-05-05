@@ -216,16 +216,17 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      */
     @Override
     public void onClickLocation(double x, double y) {
+        Log.d("测试",x+"  "+y);
         if (isAvilible(this, "com.baidu.BaiduMap")) {
             ToaS(this, "即将用百度地图打开导航");
             Uri    mUri    = Uri.parse(
-                "geo:" + 116.243614 + "," + 39.900469 + "?q=" + "中国北京市石景山区雕塑园南街");
+                "geo:" + y + "," + x );
             Intent mIntent = new Intent(Intent.ACTION_VIEW, mUri);
             startActivity(mIntent);
         } else if (isAvilible(this, "com.autonavi.minimap")) {
             ToaS(this, "即将用高德地图打开导航");
             Uri    mUri   = Uri.parse(
-                "geo:" + 116.243614 + "," + 39.900469 + "?q=" + "中国北京市石景山区雕塑园南街");
+                "geo:" + y + "," + x );
             Intent intent = new Intent("android.intent.action.VIEW", mUri);
             startActivity(intent);
         } else {

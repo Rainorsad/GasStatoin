@@ -74,6 +74,7 @@ import org.kymjs.kjframe.ui.ViewInject;
 public class MainWebActivity extends BaseActivity implements JSOnclickInterface {
 
     private static final String TAG = "WebViewH5Activity  ";
+    private static final int REQUEST_CAMERA = 0;
 
     private static final int FLAG_CHOOSE_IMG = 5;// 从相册中选择
 
@@ -229,6 +230,13 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      */
     @Override
     public void onClickCamers(String type) {
+        if (ContextCompat.checkSelfPermission(MainWebActivity.this,
+                                              Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            //就跳到让用户选择是否授权  给个码走返回方法
+            ActivityCompat.requestPermissions(MainWebActivity.this, new String[]{
+                Manifest.permission.READ_EXTERNAL_STORAGE}, 1001);
+        }
+
         if (type != null) {
             index = type;
         } else {
@@ -420,16 +428,33 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
     }
 
     /**
+     * 申请相机权限
+     */
+    private void requestCameraPermission() {
+        // 相机权限未被授予，需要申请！
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+            // 如果访问了，但是没有被授予权限，则需要告诉用户，使用此权限的好处
+            Log.i(TAG, "申请权限说明！");
+
+            ActivityCompat.requestPermissions(MainWebActivity.this,
+                                              new String[]{Manifest.permission.CAMERA},
+                                              REQUEST_CAMERA);
+        } else {
+            // 第一次申请，就直接申请
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
+                                              REQUEST_CAMERA);
+        }
+    }
+
+
+    /**
      * 调用相机
      */
     private void openGamera() {
-        if (ContextCompat.checkSelfPermission(MainWebActivity.this,
-                                              Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-
-        } else {
-            ActivityCompat.requestPermissions(MainWebActivity.this,
-                                              new String[]{Manifest.permission.CAMERA},
-                                              1);//1 can be another integer
+        if (ActivityCompat.checkSelfPermission(this,
+                                               Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            // 权限未被授予
+            requestCameraPermission();
         }
 
         String status = Environment.getExternalStorageState();

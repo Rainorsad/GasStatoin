@@ -12,8 +12,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.RequiresApi;
@@ -26,15 +26,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-
+import butterknife.BindView;
 import com.alibaba.fastjson.JSON;
 import com.alipay.sdk.app.H5PayCallback;
 import com.alipay.sdk.app.PayTask;
@@ -58,17 +58,14 @@ import com.tencent.mobileqq.gasstation.http.KJHttpUtil;
 import com.tencent.mobileqq.gasstation.inteface.JSOnclickInterface;
 import com.tencent.mobileqq.gasstation.utila.AtKeyBoardUp;
 import com.tencent.mobileqq.gasstation.utila.JSInterface;
-
-import org.kymjs.kjframe.http.HttpCallBack;
-import org.kymjs.kjframe.ui.ViewInject;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-
-import butterknife.BindView;
-import butterknife.OnClick;
+import java.util.Map;
+import org.kymjs.kjframe.http.HttpCallBack;
+import org.kymjs.kjframe.ui.ViewInject;
 
 /**
  * Created by Zhangchen on 2018/3/5.
@@ -76,7 +73,7 @@ import butterknife.OnClick;
 
 public class MainWebActivity extends BaseActivity implements JSOnclickInterface {
 
-    private static final String TAG = "WebViewH5Activity";
+    private static final String TAG = "WebViewH5Activity  ";
 
     private static final int FLAG_CHOOSE_IMG = 5;// 从相册中选择
 
@@ -97,7 +94,8 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
     private BDLocationListener mBDLocaListener;
 
     private UserInfoDb db;
-    private String  index = null;
+
+    private String index = null;
 
     @BindView(R.id.main_webview)
     WebView webView;
@@ -121,7 +119,6 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             WebView.setWebContentsDebuggingEnabled(true);
         }
-        webView.setWebViewClient(webViewClient);
         webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NARROW_COLUMNS);
         webSettings.setUseWideViewPort(true);
         webSettings.setLoadWithOverviewMode(true);
@@ -132,8 +129,9 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         webSettings.setDatabaseEnabled(true);
         webSettings.setDomStorageEnabled(true);//允许DCOM
 
-//        webView.loadUrl("file:///android_asset/test.html");
+        //        webView.loadUrl("file:///android_asset/test.html");
         webView.loadUrl(Configer.LOGINHTTP);
+        webView.setWebViewClient(webViewClient);
 
         /**
          * 打开js交互接口
@@ -143,14 +141,6 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
 
     }
 
-
-    @TargetApi(Build.VERSION_CODES.KITKAT)
-    @OnClick({})
-    public void onClick(View view) {
-        String content = "s";
-        webView.loadUrl("javascript:show()");
-    }
-
     WebViewClient webViewClient = new WebViewClient() {
 
         @Override
@@ -158,54 +148,90 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
             db = new UserInfoDb(MainWebActivity.this);
             List<UserInfoBean> data = db.getData(UserInfoBean.class);
             if (data != null && data.size() > 0) {
-                webView.loadUrl("javascript:automaticLogin(\" " + data.get(0).getUserid()  + "\"," + data.get(0).getPassword()+")");
+                Log.d(TAG, data.toString());
+                webView.loadUrl("javascript:automaticLogin(\" " + data.get(data.size()-1).getLoginName() + "\","
+                                    + data.get(data.size()-1).getLoginPwd() + ")");
+            } else {
+                Log.d(TAG, "null");
             }
         }
 
         @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
         @Override
-        public boolean shouldOverrideUrlLoading(final WebView view, WebResourceRequest request) {
-            String url = request.getUrl()
-                                .toString();
-            if (!(url.startsWith("http") || url.startsWith("https"))) {
-                return true;
-            }
-            final PayTask task = new PayTask(MainWebActivity.this);
-            boolean isIntercepted = task.payInterceptorWithUrl(url, true, new H5PayCallback() {
-                @Override
-                public void onPayResult(final H5PayResultModel result) {
-                    // 支付结果返回
-                    final String url = result.getReturnUrl();
-                    if (!TextUtils.isEmpty(url)) {
-                        MainWebActivity.this.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                view.loadUrl(url);
-                            }
-                        });
+        public boolean shouldOverrideUrlLoading(final WebView view, String url) {
+            if (url.contains("weixin://wap/pay?") || url.contains(
+                "http://weixin/wap/pay") || url.contains("https://weixin/wap/pay")) {
+                try {
+                    Toast.makeText(MainWebActivity.this, "运行", Toast.LENGTH_SHORT)
+                         .show();
+                    Intent intent = new Intent();
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(url));
+                    startActivity(intent);
+                    return true;
+                } catch (Exception e) {
+                }
+            } else {
+                if (("4.4.3".equals(android.os.Build.VERSION.RELEASE)) || ("4.4.4".equals(
+                    android.os.Build.VERSION.RELEASE))) {
+                    //兼容这两个版本设置referer无效的问题
+                    view.loadDataWithBaseURL("https://m.zhongxinnengyuan.cn/",
+                                             "<script>window.location.href=\"" + url + "\";</script>",
+                                             "text/html", "utf-8", null);
+                } else {
+                    Map<String, String> extraHeaders = new HashMap<>();
+                    extraHeaders.put("Referer", "https://m.zhongxinnengyuan.cn/");
+                    if (url.startsWith("alipays:")) {
+                        final PayTask task = new PayTask(MainWebActivity.this);
+                        boolean isIntercepted = task.payInterceptorWithUrl(url, true,
+                                                                           new H5PayCallback() {
+                                                                               @Override
+                                                                               public void onPayResult(
+                                                                                   final H5PayResultModel result) {
+                                                                                   // 支付结果返回
+                                                                                   final String url = result.getReturnUrl();
+                                                                                   if (!TextUtils.isEmpty(
+                                                                                       url)) {
+                                                                                       MainWebActivity.this.runOnUiThread(
+                                                                                           new Runnable() {
+                                                                                               @Override
+                                                                                               public void run() {
+                                                                                                   view.loadUrl(
+                                                                                                       url);
+                                                                                               }
+                                                                                           });
+                                                                                   }
+                                                                               }
+                                                                           });
+
+                    } else {
+                        view.loadUrl(url, extraHeaders);
                     }
                 }
-            });
-
-            /**
-             * 判断是否成功拦截
-             * 若成功拦截，则无需继续加载该URL；否则继续加载
-             */
-            if (!isIntercepted) {
-                view.loadUrl(url);
+                if (!(url.startsWith("http") || url.startsWith("https"))) {
+                    return true;
+                }
             }
             return true;
         }
+
+        @Override
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            handler.proceed();
+        }
     };
 
+    /**
+     * 微信支付完成跳转
+     */
     /**
      * js中调用本地相册
      */
     @Override
     public void onClickCamers(String type) {
-        if (type != null){
+        if (type != null) {
             index = type;
-        }else {
+        } else {
             index = null;
         }
         getPhoto();
@@ -216,17 +242,15 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      */
     @Override
     public void onClickLocation(double x, double y) {
-        Log.d("测试",x+"  "+y);
+        Log.d("测试", x + "  " + y);
         if (isAvilible(this, "com.baidu.BaiduMap")) {
             ToaS(this, "即将用百度地图打开导航");
-            Uri    mUri    = Uri.parse(
-                "geo:" + y + "," + x );
+            Uri    mUri    = Uri.parse("geo:" + y + "," + x);
             Intent mIntent = new Intent(Intent.ACTION_VIEW, mUri);
             startActivity(mIntent);
         } else if (isAvilible(this, "com.autonavi.minimap")) {
             ToaS(this, "即将用高德地图打开导航");
-            Uri    mUri   = Uri.parse(
-                "geo:" + y + "," + x );
+            Uri    mUri   = Uri.parse("geo:" + y + "," + x);
             Intent intent = new Intent("android.intent.action.VIEW", mUri);
             startActivity(intent);
         } else {
@@ -254,17 +278,16 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         option.setNeedDeviceDirect(true);
         mLocationClient.setLocOption(option);
         mLocationClient.start();
-        Log.d(TAG, "测试");
 
         int i = 0;
         for (; ; ) {
-            if (i<30) {
+            if (i < 30) {
                 i++;
                 if (locationIndex) {
                     locationIndex = false;
                     break;
                 }
-            }else {
+            } else {
                 break;
             }
             try {
@@ -277,11 +300,9 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         String data = null;
         if (locatdata != null) {
             data = gson.toJson(locatdata);
-            Log.d(TAG, data);
-        }else {
-            locatdata = new Location(null,null);
+        } else {
+            locatdata = new Location(null, null);
             data = gson.toJson(locatdata);
-            Log.d(TAG, data);
         }
         return data;
     }
@@ -291,16 +312,10 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      */
     @Override
     public void onClickSaveCookei(String s) {
-        UserInfoBean userInfoBean = new UserInfoBean();
-        userInfoBean.setPassword("123");
-        userInfoBean.setUserid("hahah");
+        Log.d(TAG, "savecookie" + " " + s);
+        UserInfoBean userInfoBean = JSON.parseObject(s, UserInfoBean.class);
         db = new UserInfoDb(MainWebActivity.this);
-        List<UserInfoBean> data = db.getData(UserInfoBean.class);
-        if (data != null && data.size() > 0) {
-            db.upData(userInfoBean, "id=0");
-        } else {
-            db.saveData(userInfoBean);
-        }
+        db.saveData(userInfoBean);
     }
 
     /**
@@ -458,18 +473,22 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if(result != null) {
-            if(result.getContents() == null) {
-                Toast.makeText(MainWebActivity.this, "二维码有误，请重新选择", Toast.LENGTH_LONG).show();
+        if (result != null) {
+            if (result.getContents() == null) {
+                Toast.makeText(MainWebActivity.this, "二维码有误，请重新选择", Toast.LENGTH_LONG)
+                     .show();
             } else {
-                if (result.getContents().contains("http") || result.getContents().contains("https")){
-//                    webView.loadUrl(result.getContents());
-                    Intent it = new Intent(MainWebActivity.this,NewWebActivity.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putString("url",result.getContents());
-                    startActivity(it);
+                if (result.getContents()
+                          .contains("http") || result.getContents()
+                                                     .contains("https")) {
+                    webView.loadUrl(result.getContents());
+                    //                    Intent it     = new Intent(MainWebActivity.this, NewWebActivity.class);
+                    //                    Bundle bundle = new Bundle();
+                    //                    bundle.putString("url", result.getContents());
+                    //                    it.putExtras(bundle);
+                    //                    startActivity(it);
                 }
-//                Toast.makeText(MainWebActivity.this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+                //                Toast.makeText(MainWebActivity.this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
             }
         }
         if (requestCode == FLAG_CHOOSE_IMG && resultCode == RESULT_OK) {
@@ -526,8 +545,7 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         public void onSuccess(String t) {
             super.onSuccess(t);
             PhotoCall photoCall = JSON.parseObject(t, PhotoCall.class);
-            Log.e(TAG, photoCall.toString());
-            if (dialog != null){
+            if (dialog != null) {
                 dialog.dismiss();
             }
             if (photoCall.getRetCode()
@@ -537,10 +555,10 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
                 String data = Configer.HTTP_MAIN + replace;
 
                 Log.e(TAG, data);
-                webView.loadUrl("javascript:setImage(\" " + data  + "\",\" " + index + "\")");
+                webView.loadUrl("javascript:setImage(\" " + data + "\",\" " + index + "\")");
             } else {
                 Log.e(TAG, "xing");
-                webView.loadUrl("javascript:setImage(\" " + path  + "\",\" " + index + "\")");
+                webView.loadUrl("javascript:setImage(\" " + path + "\",\" " + index + "\")");
             }
         }
 

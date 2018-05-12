@@ -10,40 +10,45 @@ import java.io.Serializable;
 
 @Table(name="user_info_sql")
 public class UserInfoBean implements Serializable{
+    String loginName;
+    String loginPwd;
+    String id;
+    String token;
+
     @Override
     public String toString() {
-        return "UserInfoBean{" +
-                "id=" + id +
-                "pass=" + password +
-                "userid=" + userid +
-                '}';
+        return "UserInfoBean{" + "loginName='" + loginName + '\'' + ", loginPwd='" + loginPwd + '\'' + ", id='" + id + '\'' + ", token='" + token + '\'' + '}';
     }
 
-    private int id; //用来区别用户id
-    private String password;
-    private String userid;
-
-    public String getUserid() {
-        return userid;
+    public String getLoginName() {
+        return loginName;
     }
 
-    public void setUserid(String userid) {
-        this.userid = userid;
+    public void setLoginName(String loginName) {
+        this.loginName = loginName;
     }
 
-    public String getPassword() {
-        return password;
+    public String getLoginPwd() {
+        return loginPwd;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setLoginPwd(String loginPwd) {
+        this.loginPwd = loginPwd;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

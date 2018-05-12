@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.tencent.mobileqq.gasstation">
 
     <uses-permission android:name="android.permission.RECEIVE_USER_PRESENT" />
@@ -82,6 +83,10 @@
         <activity android:name=".activity.imageutils.CropImageActivity" />
         <activity android:name=".activity.RegistActivity" />
         <activity android:name=".activity.LoginActivity" />
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="fullSensor"
+            tools:replace="screenOrientation" />
 
         <!--支付宝支付-->
         <activity
@@ -113,7 +118,8 @@
             android:name=".wxapi.WXPayEntryActivity"
             android:exported="true"
             android:launchMode="singleTop"/>
-
+        <activity android:name=".wxapi.WXEntryActivity"
+            />
 
         <!--微信支付-->
     </application>

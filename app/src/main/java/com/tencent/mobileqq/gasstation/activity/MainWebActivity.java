@@ -74,7 +74,7 @@ import org.kymjs.kjframe.ui.ViewInject;
 public class MainWebActivity extends BaseActivity implements JSOnclickInterface {
 
     private static final String TAG = "WebViewH5Activity  ";
-    private static final int REQUEST_CAMERA = 0;
+    private static final int REQUEST_CAMERA = 13;
 
     private static final int FLAG_CHOOSE_IMG = 5;// 从相册中选择
 
@@ -235,6 +235,12 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
             //就跳到让用户选择是否授权  给个码走返回方法
             ActivityCompat.requestPermissions(MainWebActivity.this, new String[]{
                 Manifest.permission.READ_EXTERNAL_STORAGE}, 1001);
+        }
+
+        if (ActivityCompat.checkSelfPermission(this,
+                                               Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            // 权限未被授予
+            requestCameraPermission();
         }
 
         if (type != null) {
@@ -451,11 +457,6 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
      * 调用相机
      */
     private void openGamera() {
-        if (ActivityCompat.checkSelfPermission(this,
-                                               Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            // 权限未被授予
-            requestCameraPermission();
-        }
 
         String status = Environment.getExternalStorageState();
         if (status.equals(Environment.MEDIA_MOUNTED)) {
@@ -553,14 +554,18 @@ public class MainWebActivity extends BaseActivity implements JSOnclickInterface 
         } else if (requestCode == FLAG_MODIFY_FINISH && resultCode == RESULT_OK) {
             if (data != null) {
                 path = data.getStringExtra("path");
-                //                Log.e(TAG,path);
-                File    file        = new File(path);
-                boolean orExistsDir = FileUtils.createOrExistsFile(file);
-                if (!orExistsDir) {
-                    ViewInject.toast("没有获取到照片，请重新选取");
-                    return;
-                }
-                KJHttpUtil.postFile(MainWebActivity.this, file, photoCallback);
+               try {
+                   File    file        = new File(path);
+                   boolean orExistsDir = FileUtils.createOrExistsFile(file);
+                   if (!orExistsDir) {
+                       ViewInject.toast("没有获取到照片，请重新选取");
+                       return;
+                   }
+                   KJHttpUtil.postFile(MainWebActivity.this, file, photoCallback);
+               }catch (Exception e){
+                   ViewInject.toast("没有获取到照片，请检查权限");
+               }
+
             }
         }
     }
